@@ -4,40 +4,21 @@ using UnityEngine;
 
 namespace C4U.Game
 {
-    public class Connect4GridCell
+    public class Connect4Grid<T> where T : IConnect4GridCell, new()
     {
-        public IPlayer Occupant => _occupant;
-        public bool Occupied => _occupant != null;
-
-        private IPlayer _occupant;
-
-        public bool Occupy(IPlayer occupant)
-        {
-            if (occupant == null)
-                return false;
-
-            _occupant = occupant;
-
-            return true;
-        }
-    }
-
-    public class Connect4Grid
-    {
-        public delegate void CellEvent(Transform cell, Connect4GridCell data);
+        public delegate void CellEvent(Transform cell, IConnect4GridCell data);
         public event CellEvent OnCellOccupied;
         public event CellEvent OnActiveColumnChanged;
-        public Vector2Int Size => new(_width, _height);
 
         private readonly List<Transform> _cells = new();
-        private readonly Grid<Connect4GridCell> _grid;
+        private readonly Grid<IConnect4GridCell> _grid;
         private readonly int _width, _height;
         private int _activeGridColumnIndex = -1;
 
         public Connect4Grid(int width, int height, List<Transform> cells)
         {
             _cells = cells;
-            _grid = new(width, height, () => new());
+            _grid = new(width, height, () => new T());
             _width = width;
             _height = height;
         }
@@ -102,7 +83,7 @@ namespace C4U.Game
             }
         }
 
-        public Connect4GridCell GetUnoccupiedColumnCell(int index)
+        public IConnect4GridCell GetUnoccupiedColumnCell(int index)
         {
             if (index < 0)
                 return null;
@@ -111,7 +92,7 @@ namespace C4U.Game
             {
                 var gridCell = _grid.Get(index % _width, y);
 
-                if (!gridCell.Occupied)
+                if (!gridCell.IsOccupied())
                     return gridCell;
             }
 

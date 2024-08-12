@@ -17,9 +17,9 @@ namespace C4U
 
         private Vector3 _currentScreenPos;
 
-        private Connect4Grid _grid;
+        private Connect4Grid<Connect4GridCell> _grid;
         private Transform _currentHighlightedCell;
-        private Connect4GridCell _currentHighlightedCellData;
+        private IConnect4GridCell _currentHighlightedCellData;
 
         private void Awake()
         {
@@ -92,7 +92,7 @@ namespace C4U
 
         private void OnConfirmChoice(InputAction.CallbackContext ctx)
         {
-            if (!ctx.ReadValueAsButton())
+            if (!ctx.performed)
                 return;
 
             IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
@@ -100,7 +100,7 @@ namespace C4U
             _grid.ConfirmChoice(player);
         }
 
-        private void OnGridCellOccupation(Transform cell, Connect4GridCell data)
+        private void OnGridCellOccupation(Transform cell, IConnect4GridCell data)
         {
             var cellMat = cell.GetComponent<MeshRenderer>().material;
 
@@ -115,11 +115,11 @@ namespace C4U
             };
         }
 
-        private void OnActiveColumnChanged(Transform cell, Connect4GridCell data)
+        private void OnActiveColumnChanged(Transform cell, IConnect4GridCell data)
         {
             if (_currentHighlightedCell != null)
             {
-                if (!_currentHighlightedCellData.Occupied)
+                if (!_currentHighlightedCellData.IsOccupied())
                 {
                     _currentHighlightedCell.GetComponent<MeshRenderer>().material.color = Color.white;
                 }
