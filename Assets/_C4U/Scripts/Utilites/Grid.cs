@@ -10,7 +10,7 @@ namespace C4U.Utilities
     public class Grid<T>
     {
         // Ease of access variables to interface with the grid.
-        public IEnumerable<T> Values => _grid;
+        public List<T> Values => _grid;
         public int Size => _grid.Count;
         public readonly int Width, Height;
 
@@ -68,6 +68,17 @@ namespace C4U.Utilities
         public T Get(int x, int y)
         {
             return _grid[x + y * Width];
+        }
+
+        /// <summary>
+        /// Return a grid cell's value at a given index.
+        /// NOTE: This method does not check for out of bound index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public T Get(int index)
+        {
+            return _grid[index];
         }
 
         // Check if the x/y coordinates are in within the grid's range.

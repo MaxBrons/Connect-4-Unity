@@ -1,49 +1,29 @@
 using C4U.Core;
+using C4U.Game;
 using C4U.Input;
 using C4U.Utilities;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace C4U
 {
-    public class Connect4GridCell
-    {
-        public bool Occupied = false;
-        public IPlayer Occupant = null;
-
-        public void Occupy(IPlayer occupantID)
-        {
-            if (occupantID == null)
-                return;
-
-            Occupant = occupantID;
-            Occupied = true;
-        }
-    }
-
     public class Connect4TestSceneBootstrap : MonoBehaviour
     {
         [SerializeField] private GridGenerator _gridGenerator;
         [SerializeField] private Camera _rayCamera;
 
-        private Grid<Connect4GridCell> _grid;
         private BaseControls _controls;
         private IInputEvent _fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent;
 
-        private int _width, _height;
-        private List<Transform> _cells = new();
-
         private Vector3 _currentScreenPos;
-        private int _activeGridCellIndex = -1;
+
+        private Connect4Grid _grid;
+        private Transform _currentHighlightedCell;
+        private Connect4GridCell _currentHighlightedCellData;
 
         private void Awake()
         {
-            _width = _gridGenerator.Width;
-            _height = _gridGenerator.Height;
-            _cells = _gridGenerator.GridCells;
-
-            _grid = new(_width, _height, () => new());
+            _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
 
             // Fallback for camera assignment.
             if (_rayCamera == null)
@@ -54,13 +34,30 @@ namespace C4U
             _controls = new();
             _controls.Player.Enable();
 
+            // TODO: Move this to the game manager.
+            GameState.AddPlayer(new Player(0));
+        }
+
+        private void OnEnable()
+        {
+            _grid.OnCellOccupied += OnGridCellOccupation;
+            _grid.OnActiveColumnChanged += OnActiveColumnChanged;
+
             _fireEvent = new InputEvent(_controls.Player.Fire, OnFire);
             _pointerPositionChangedEvent = new InputEvent(_controls.Player.PointerPosition, OnPointerPositionChanged);
             _moveInDirectionEvent = new InputEvent(_controls.Player.Move, OnMoveInDirection);
             _confirmEvent = new InputEvent(_controls.Player.Confirm, OnConfirmChoice);
+        }
 
-            // TODO: Move this to the game manager.
-            GameState.AddPlayer(new Player(0));
+        private void OnDisable()
+        {
+            _grid.OnCellOccupied -= OnGridCellOccupation;
+            _grid.OnActiveColumnChanged -= OnActiveColumnChanged;
+
+            _fireEvent = null;
+            _pointerPositionChangedEvent = null;
+            _moveInDirectionEvent = null;
+            _confirmEvent = null;
         }
 
         private void OnFire(InputAction.CallbackContext ctx)
@@ -68,17 +65,9 @@ namespace C4U
             if (!ctx.performed)
                 return;
 
-            Ray ray = _rayCamera.ScreenPointToRay(_currentScreenPos);
+            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
 
-            if (Physics.Raycast(ray.origin, ray.direction * 10, out RaycastHit hit, 100f))
-            {
-                if (!hit.transform)
-                    return;
-
-                var cellIndex = _cells.FindIndex(cell => cell.Equals(hit.transform));
-
-                TryChooseGridCell(cellIndex);
-            }
+            _grid.ConfirmChoice(player);
         }
 
         private void OnPointerPositionChanged(InputAction.CallbackContext ctx)
@@ -86,33 +75,19 @@ namespace C4U
             if (!ctx.performed)
                 return;
 
-            var screenPos = ctx.ReadValue<Vector2>();
-            _currentScreenPos = new Vector3(screenPos.x, screenPos.y, _rayCamera.nearClipPlane);
+            _currentScreenPos = ctx.ReadValue<Vector2>();
+            _currentScreenPos.z = _rayCamera.nearClipPlane;
 
-            Ray ray = _rayCamera.ScreenPointToRay(_currentScreenPos);
-
-            if (Physics.Raycast(ray.origin, ray.direction * 10, out RaycastHit hit, 100f))
-            {
-                if (!hit.transform)
-                    return;
-
-                var cell = _cells.Find(cell => cell == hit.transform);
-
-                if (cell != null)
-                {
-                    _activeGridCellIndex = _cells.IndexOf(cell);
-                }
-            }
-            else
-            {
-                _activeGridCellIndex = -1;
-            }
+            RaycastFromScreen(out RaycastHit hit);
+            _grid.SetActiveColumn(hit.transform);
         }
 
         private void OnMoveInDirection(InputAction.CallbackContext ctx)
         {
             if (!ctx.performed)
                 return;
+
+            _grid.MoveInDirection(ctx.ReadValue<Vector2>().x > 0 ? 1 : -1);
         }
 
         private void OnConfirmChoice(InputAction.CallbackContext ctx)
@@ -120,57 +95,59 @@ namespace C4U
             if (!ctx.ReadValueAsButton())
                 return;
 
-            if (_activeGridCellIndex >= 0)
-            {
-                TryChooseGridCell(_activeGridCellIndex);
-            }
+            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
+
+            _grid.ConfirmChoice(player);
         }
 
-        private Connect4GridCell GetChosenColumnCell(int index)
+        private void OnGridCellOccupation(Transform cell, Connect4GridCell data)
         {
-            for (int y = 0; y < _height; y++)
+            var cellMat = cell.GetComponent<MeshRenderer>().material;
+
+            switch (data.Occupant.PlayerIndex)
             {
-                int x = index % _grid.Width;
-                var gridCell = _grid.Get(x, y);
-
-                if (!gridCell.Occupied)
-                    return gridCell;
-            }
-
-            return default;
-        }
-
-        private void UpdateGrid()
-        {
-            for (int i = 0; i < _cells.Count - 1; i++)
-            {
-                var cell = _grid.Get(i % _width, i / _width);
-
-                if (!cell.Occupied)
-                    continue;
-
-                var cellMat = _cells[i].GetComponent<MeshRenderer>().material;
-
-                if (cell.Occupant.PlayerIndex == 0)
+                case 0:
                     cellMat.color = Color.red;
-                if (cell.Occupant.PlayerIndex == 1)
+                    break;
+                case 1:
                     cellMat.color = Color.blue;
-            }
+                    break;
+            };
         }
 
-        private bool TryChooseGridCell(int index)
+        private void OnActiveColumnChanged(Transform cell, Connect4GridCell data)
         {
-            var gridCell = GetChosenColumnCell(index);
-
-            // If valid cell, occupy the cell and update the grid.
-            if (gridCell != null)
+            if (_currentHighlightedCell != null)
             {
-                IPlayer activePlayer = GameState.GetCurrentPlayer<IPlayer>();
-                gridCell.Occupy(activePlayer);
-
-                UpdateGrid();
-                return true;
+                if (!_currentHighlightedCellData.Occupied)
+                {
+                    _currentHighlightedCell.GetComponent<MeshRenderer>().material.color = Color.white;
+                }
             }
+
+            if (cell != null)
+            {
+                _currentHighlightedCellData = data;
+                _currentHighlightedCell = cell;
+                _currentHighlightedCell.GetComponent<MeshRenderer>().material.color = Color.green;
+
+                return;
+            }
+
+            _currentHighlightedCell = null;
+            _currentHighlightedCellData = null;
+        }
+
+        private bool RaycastFromScreen(out RaycastHit hit)
+        {
+            Ray ray = _rayCamera.ScreenPointToRay(_currentScreenPos);
+
+            if (Physics.Raycast(ray.origin, ray.direction * 10, out hit))
+            {
+                if (!hit.transform)
+                    return false;
+            }
+
             return false;
         }
     }

@@ -1,4 +1,4 @@
-﻿namespace C4U.Core
+﻿namespace C4U.Game
 {
     public interface IPlayer
     {
