@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace C4U
+namespace C4U.Utilities
 {
     /// <summary>
     /// Generic class for representing a grid.
@@ -33,8 +33,10 @@ namespace C4U
 
             // Go through the entire grid and initialize each cell with
             // either the initializer Func value or their defaults.
-            for (int i = 0; i < width * height; i++) {
-                if (initializer != null) {
+            for (int i = 0; i < width * height; i++)
+            {
+                if (initializer != null)
+                {
                     _grid.Add(initializer());
                     continue;
                 }
@@ -65,7 +67,7 @@ namespace C4U
         /// <returns></returns>
         public T Get(int x, int y)
         {
-            return _grid[y * Width + x];
+            return _grid[x + y * Width];
         }
 
         // Check if the x/y coordinates are in within the grid's range.

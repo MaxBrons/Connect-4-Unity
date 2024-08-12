@@ -1,3 +1,4 @@
+using C4U.Utilities;
 using UnityEngine;
 
 namespace C4U
@@ -23,7 +24,8 @@ namespace C4U
 
             const float gizmoScale = 0.5f;
 
-            for (int i = 0; i < _grid.Size; i++) {
+            for (int i = 0; i < _grid.Size; i++)
+            {
                 int x = i % _grid.Width;
                 int y = i / _grid.Width;
 
