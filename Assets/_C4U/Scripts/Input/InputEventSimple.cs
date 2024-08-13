@@ -6,35 +6,10 @@ namespace C4U.Input
     using InputActionEvent = Action<InputAction.CallbackContext>;
 
     /// <summary>
-    /// Interface used for easy binding to a Unity input action.
-    /// </summary>
-    public interface IInputEvent
-    {
-        public void Enable();
-        public void Disable();
-
-        public static void EnableMultiple(params IInputEvent[] events)
-        {
-            foreach (var @event in events)
-            {
-                @event.Enable();
-            }
-        }
-
-        public static void DisableMultiple(params IInputEvent[] events)
-        {
-            foreach (var @event in events)
-            {
-                @event.Disable();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Implementation of <see cref="IInputEvent"/> to abstract out the Unity Input System bindings. <br/>
+    /// Implementation of <see cref="IInputEventSimple"/> to abstract out the Unity Input System bindings. <br/>
     /// Auto unbinds when the object is destroyed.
     /// </summary>
-    public class InputEvent : IInputEvent
+    public class InputEventSimple : IInputEvent
     {
         private readonly InputAction _action;
         private readonly InputActionEvent _onAction;
@@ -44,13 +19,13 @@ namespace C4U.Input
         /// </summary>
         /// <param name="action">The <see cref="InputAction"/> to (un)bind to.</param>
         /// <param name="onAction">The method to bind to/unbind from the given <see cref="InputAction"/>.</param>
-        public InputEvent(InputAction action, InputActionEvent onAction)
+        public InputEventSimple(InputAction action, InputActionEvent onAction)
         {
             _action = action;
             _onAction = onAction;
         }
 
-        ~InputEvent()
+        ~InputEventSimple()
         {
             Disable();
         }
@@ -60,16 +35,12 @@ namespace C4U.Input
             // Unbind the action first to stop double bindings from occuring.
             Disable();
 
-            _action.started += _onAction;
             _action.performed += _onAction;
-            _action.canceled += _onAction;
         }
 
         public void Disable()
         {
-            _action.started -= _onAction;
             _action.performed -= _onAction;
-            _action.canceled -= _onAction;
         }
     }
 }

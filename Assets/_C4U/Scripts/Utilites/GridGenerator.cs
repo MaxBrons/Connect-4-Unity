@@ -23,7 +23,6 @@ namespace C4U.Utilities
             _gridCells = transform.GetComponentsInChildren<Transform>()
                 .Where(cell => cell != transform)
                 .ToList();
-            print(_gridCells.Contains(transform));
         }
 
         [ContextMenu("Regenerate Grid")]

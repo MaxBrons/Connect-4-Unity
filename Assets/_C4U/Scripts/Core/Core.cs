@@ -1,3 +1,4 @@
+using C4U.Game;
 using System.Collections;
 using UnityEngine;
 
@@ -43,6 +44,9 @@ namespace C4U.Core
         private void Awake()
         {
             ICore._coroutineHelper = this;
+
+            GameState.AddPlayer(new Player(0));
+            GameState.AddPlayer(new Player(1));
         }
     }
 }

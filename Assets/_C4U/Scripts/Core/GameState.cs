@@ -12,6 +12,7 @@ namespace C4U.Core
     public static class GameState
     {
         public static int CurrentPlayerIndex => s_currentPlayerIndex;
+        public static int PlayerCount => s_players.Count;
 
         private readonly static List<IPlayer> s_players = new();
         private static int s_currentPlayerIndex = -1;
@@ -60,7 +61,7 @@ namespace C4U.Core
 
             if (player != null)
             {
-                s_currentPlayerIndex = player.PlayerIndex % (s_players.Count - 1);
+                s_currentPlayerIndex = player.PlayerIndex;
             }
         }
 

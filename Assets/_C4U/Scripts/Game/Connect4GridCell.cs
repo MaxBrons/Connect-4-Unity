@@ -14,13 +14,8 @@
 
         public bool Occupy(IPlayer occupant)
         {
-            if (occupant != null)
-            {
-                Occupant = occupant;
-                return true;
-            }
-
-            return false;
+            Occupant = occupant;
+            return IsOccupied();
         }
 
         public bool IsOccupied()
