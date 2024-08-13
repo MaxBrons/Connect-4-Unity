@@ -1,3 +1,5 @@
+using C4U.Core.SceneManagement;
+using C4U.Game;
 using System.Collections;
 using UnityEngine;
 
@@ -9,6 +11,8 @@ namespace C4U.Core
     /// </summary>
     public interface ICore
     {
+        public static IDependencyContainer Container;
+
         protected static MonoBehaviour _coroutineHelper;
 
         /// <summary>
@@ -35,14 +39,25 @@ namespace C4U.Core
     /// </summary>
     public class Core : MonoBehaviour, ICore
     {
-        // TODO:
-        // 1. Move Core to the services scene.
-        // 2. Create scene loading container.
-        // 3. Load game via services scene.
+        [SerializeField] private SceneContainer _sceneContainer;
 
-        private void Awake()
+        private IGameState _gameState;
+
+        private async void Awake()
         {
+            _gameState = new GameState();
+
+            // Register all game dependencies.
             ICore._coroutineHelper = this;
+            ICore.Container = new DependencyContainer();
+            await ICore.Container.Add<IGameState>(_gameState);
+            await ICore.Container.Add<ISceneContainer>(_sceneContainer.CreateInstance());
+
+            _gameState.AddPlayer(new Player(0));
+            _gameState.AddPlayer(new Player(1));
+
+            // Load in the main menu scene.
+            await SceneLoader.LoadSceneAsync("MainMenu");
         }
     }
 }

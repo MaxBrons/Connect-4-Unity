@@ -6,9 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_C4U/Scenes/Temp/Scene Loading.unity
-    guid: f10ccae6733c8a348bb25432e4a1b1ef
+    path: Assets/_C4U/Scenes/Services.unity
+    guid: b90af2ea07367d146a390e468dfa2302
   - enabled: 1
-    path: Assets/_C4U/Scenes/Temp/Scene Loading 2.unity
-    guid: 7117450eae0c9fa4db04cdfc51954920
+    path: Assets/_C4U/Scenes/MainMenu.unity
+    guid: c562541a3f625e141a02e95ff7a27a77
+  - enabled: 1
+    path: Assets/_C4U/Scenes/Main.unity
+    guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/_C4U/Scenes/UI/MainSceneUI.unity
+    guid: d68ea1fa217762a42a6a3d2d61ba816e
+  - enabled: 1
+    path: Assets/_C4U/Scenes/UI/EndSceneUI.unity
+    guid: 3a24bef38e251824e9057bc823fefc98
   m_configObjects: {}
