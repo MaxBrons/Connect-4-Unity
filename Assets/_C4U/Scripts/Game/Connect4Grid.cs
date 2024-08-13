@@ -1,4 +1,5 @@
 using C4U.Utilities;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ namespace C4U.Game
 
         public delegate void ConnectionEvent(IPlayer victor);
         public event ConnectionEvent OnConnectionFound;
+
+        public event Action OnGridOccupied;
 
         private readonly List<Transform> _cells = new(); // Grid cells in the scene. 
         private readonly Grid<IConnect4GridCell> _grid;
@@ -111,6 +114,7 @@ namespace C4U.Game
                 OnCellOccupied?.Invoke(_cells[cellIndex], gridCell);
 
                 CheckForConnections(cellIndex, source);
+                CheckForFullGrid();
             }
         }
 
@@ -214,6 +218,18 @@ namespace C4U.Game
             }
 
             return false;
+        }
+
+
+        private void CheckForFullGrid()
+        {
+            foreach (var cell in _grid.Values)
+            {
+                if (!cell.IsOccupied())
+                    return;
+            }
+
+            OnGridOccupied?.Invoke();
         }
     }
 }
