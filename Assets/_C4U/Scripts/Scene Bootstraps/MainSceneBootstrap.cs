@@ -198,7 +198,7 @@ namespace C4U
         private async void ShowEndScreen()
         {
             // Wait a bit to unregister pointer click.
-            await Task.Delay(500);
+            await Task.Delay(250);
 
             _endSceneUI = await SceneLoader.LoadCanvasSceneAsync<IEndSceneUI>("EndSceneUI");
 
@@ -206,6 +206,7 @@ namespace C4U
             string winnerText = playerIndex >= 0
                 ? "Result: PLAYER " + playerIndex + " won!"
                 : "Result: Tie";
+
 
             _endSceneUI.SetWinnerText(winnerText);
             _endSceneUI.SetButtonAction(async () =>

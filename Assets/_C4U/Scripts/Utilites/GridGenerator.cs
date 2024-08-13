@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 namespace C4U.Utilities
@@ -28,8 +27,6 @@ namespace C4U.Utilities
         [ContextMenu("Regenerate Grid")]
         private void GenerateGrid()
         {
-            Undo.RegisterFullObjectHierarchyUndo(gameObject, "Generate grid");
-
             _gridCells = transform.GetComponentsInChildren<Transform>()
                 .Where(cell => cell != transform)
                 .ToList();
