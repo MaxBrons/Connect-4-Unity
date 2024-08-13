@@ -37,7 +37,7 @@ namespace C4U
             _controls.Player.Enable();
 
             await Utils.WaitForValidObject(ICore.Container, 100);
-            _gameState = ICore.Container.Get<IGameState>();
+            _gameState = await ICore.Container.Get<IGameState>();
 
             // TODO: Move this to the game manager.
             _gameState.AddPlayer(new Player(0));

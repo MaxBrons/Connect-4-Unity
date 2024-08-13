@@ -84,7 +84,10 @@ namespace C4U.Core
             if (player != null)
             {
                 _currentPlayerIndex = player.PlayerIndex;
+                return;
             }
+
+            _currentPlayerIndex = -1;
         }
 
         /// <summary>
@@ -94,7 +97,7 @@ namespace C4U.Core
         /// <returns></returns>
         public T GetCurrentPlayer<T>() where T : class, IPlayer
         {
-            return _players[_currentPlayerIndex] as T;
+            return _players.FirstOrDefault(player => player.PlayerIndex == _currentPlayerIndex) as T;
         }
 
         /// <summary>

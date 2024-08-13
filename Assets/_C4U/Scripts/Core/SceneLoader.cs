@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -7,11 +8,28 @@ using UnityEngine.SceneManagement;
 namespace C4U.Core.SceneManagement
 {
     /// <summary>
+    /// Used to log error when failing to load scene.
+    /// </summary>
+    public struct SceneLoadResult
+    {
+        public bool Success;
+        public string Message;
+
+        public SceneLoadResult(bool success, string message = "")
+        {
+            Success = success;
+            Message = message;
+        }
+    }
+
+    /// <summary>
     /// Class for asynchronously (un)loading a scene.
     /// </summary>
     public static class SceneLoader
     {
-        private const string INDEX_WARNING = "Warning: You are trying to load a scene that is already active.";
+        private static List<Scene> _activeScenes = new();
+
+        private const string ERROR_PREFIX = "Failed to load/unload scene: ";
 
         /// <summary>
         /// Load the scene with the given build index and wait until the process is finished.
@@ -19,25 +37,15 @@ namespace C4U.Core.SceneManagement
         /// <param name="index">The build index of the scene to load.</param>
         /// <param name="options">The load options to use when loading the scene.</param>
         /// <returns></returns>
-        public static async Task LoadSceneAsync(int index, LoadSceneMode options = LoadSceneMode.Single)
+        public static async Task LoadSceneAsync(int index, LoadSceneMode options = LoadSceneMode.Additive)
         {
-            // TODO: Change the indexing to a scene container scriptable object.
-            if (SceneManager.GetActiveScene().buildIndex == index)
-            {
-                Debug.LogWarning(INDEX_WARNING);
-                return;
-            }
+            // Get the Scene Container.
+            ISceneContainer container = await ICore.Container.Get<ISceneContainer>();
 
-            // Using a TaskCompletionSource to be able to await the Task and use a coroutine without to much hassle.
-            var source = new TaskCompletionSource<bool>();
-            AsyncOperation operation = SceneManager.LoadSceneAsync(index, options);
+            // Get the scene by index and load the scene if it's valid.
+            var scene = container.GetSceneByIndex(index);
 
-            var coroutine = ICore.StartCoroutine(AwaitSceneLoad(operation, source));
-
-            if (coroutine != null)
-            {
-                await source.Task;
-            }
+            await LoadSceneAsync_Internal(scene, options);
         }
 
         /// <summary>
@@ -46,14 +54,15 @@ namespace C4U.Core.SceneManagement
         /// <param name="name">The build index of the scene to load.</param>
         /// /// <param name="options">The load options to use when loading the scene.</param>
         /// <returns></returns>
-        public static async Task LoadSceneAsync(string name, LoadSceneMode options = LoadSceneMode.Single)
+        public static async Task LoadSceneAsync(string name, LoadSceneMode options = LoadSceneMode.Additive)
         {
-            var scene = SceneManager.GetSceneByName(name);
+            // Get the Scene Container.
+            ISceneContainer container = await ICore.Container.Get<ISceneContainer>();
 
-            if (scene.IsValid())
-            {
-                await LoadSceneAsync(scene.buildIndex, options);
-            }
+            // Get the scene by name and load the scene if it's valid.
+            var scene = container.GetSceneByName(name);
+
+            await LoadSceneAsync_Internal(scene, options);
         }
 
         /// <summary>
@@ -66,7 +75,7 @@ namespace C4U.Core.SceneManagement
         {
             await LoadSceneAsync(index, LoadSceneMode.Additive);
 
-            return Object.FindObjectsOfType<MonoBehaviour>().FirstOrDefault(x => x.GetType().Equals(typeof(T))) as T;
+            return await ICanvas.FetchCanvas<T>();
         }
 
         /// <summary>
@@ -79,7 +88,7 @@ namespace C4U.Core.SceneManagement
         {
             await LoadSceneAsync(name, LoadSceneMode.Additive);
 
-            return Object.FindObjectsOfType<MonoBehaviour>().FirstOrDefault(x => x.GetType().Equals(typeof(T))) as T;
+            return await ICanvas.FetchCanvas<T>();
         }
 
         /// <summary>
@@ -89,16 +98,13 @@ namespace C4U.Core.SceneManagement
         /// <returns></returns>
         public static async Task UnloadSceneAsync(int index, UnloadSceneOptions options = UnloadSceneOptions.None)
         {
-            // Using a TaskCompletionSource to be able to await the Task and use a coroutine without to much hassle.
-            var source = new TaskCompletionSource<bool>();
-            AsyncOperation operation = SceneManager.UnloadSceneAsync(index, options);
+            // Get the Scene Container.
+            ISceneContainer container = await ICore.Container.Get<ISceneContainer>();
 
-            var coroutine = ICore.StartCoroutine(AwaitSceneLoad(operation, source));
+            // Check if the scene is valid.
+            var scene = container.GetSceneByIndex(index);
 
-            if (coroutine != null)
-            {
-                await source.Task;
-            }
+            await UnloadSceneAsync_Internal(scene, options);
         }
 
         /// <summary>
@@ -109,12 +115,76 @@ namespace C4U.Core.SceneManagement
         /// <returns></returns>
         public static async Task UnloadSceneAsync(string name, UnloadSceneOptions options = UnloadSceneOptions.None)
         {
-            var scene = SceneManager.GetSceneByName(name);
+            // Get the Scene Container.
+            ISceneContainer container = await ICore.Container.Get<ISceneContainer>();
 
-            if (scene.IsValid())
+            // Check if the scene is valid and unload it.
+            var scene = container.GetSceneByName(name);
+
+            await UnloadSceneAsync_Internal(scene, options);
+        }
+
+        // Do the scene loading and error handling here.
+        private static async Task LoadSceneAsync_Internal(Scene scene, LoadSceneMode options)
+        {
+            // Check if the scene is not null.
+            if (scene == null)
             {
-                await UnloadSceneAsync(scene.buildIndex, options);
+                LogError("Scene was null.");
+                return;
             }
+
+            // Get the Scene Container.
+            ISceneContainer container = await ICore.Container.Get<ISceneContainer>();
+
+            // Check if the scene is not already loaded in.
+            if (_activeScenes.Any(x => x.Index == scene.Index))
+                return;
+
+            // Using a TaskCompletionSource to be able to await the Task and use a coroutine without to much hassle.
+            var source = new TaskCompletionSource<bool>();
+            AsyncOperation operation = SceneManager.LoadSceneAsync(scene.Index, options);
+
+            // Load in the scene.
+            var coroutine = ICore.StartCoroutine(AwaitSceneLoad(operation, source));
+
+            if (coroutine != null)
+            {
+                await source.Task;
+
+                _activeScenes.Add(scene);
+                return;
+            }
+
+            LogError("Scene loading coroutine failed.");
+        }
+
+        // Do the scene unloading and error handling here.
+        private static async Task UnloadSceneAsync_Internal(Scene scene, UnloadSceneOptions options)
+        {
+            // Check if the scene is not null.
+            if (scene == null)
+            {
+                LogError("Scene was null.");
+                return;
+            }
+
+            // Using a TaskCompletionSource to be able to await the Task and use a coroutine without to much hassle.
+            var source = new TaskCompletionSource<bool>();
+            AsyncOperation operation = SceneManager.UnloadSceneAsync(scene.Index, options);
+
+            var coroutine = ICore.StartCoroutine(AwaitSceneLoad(operation, source));
+
+            // Unload the valid scene.
+            if (coroutine != null)
+            {
+                await source.Task;
+
+                _activeScenes.Remove(scene);
+                return;
+            }
+
+            LogError("Scene unloading coroutine failed.");
         }
 
         // Wait until Unity is done loading the scene.
@@ -126,6 +196,11 @@ namespace C4U.Core.SceneManagement
             }
 
             source.SetResult(true);
+        }
+
+        private static void LogError(string message)
+        {
+            Debug.LogError(ERROR_PREFIX + message);
         }
     }
 }

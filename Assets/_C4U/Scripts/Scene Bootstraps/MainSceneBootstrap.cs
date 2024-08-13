@@ -3,6 +3,7 @@ using C4U.Core.SceneManagement;
 using C4U.Game;
 using C4U.Input;
 using C4U.Utilities;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,6 +24,8 @@ namespace C4U
         private IConnect4GridCell _currentHighlightedCellData;
 
         private IGameState _gameState;
+        private IMainSceneUI _mainSceneUI;
+        private IEndSceneUI _endSceneUI;
 
         private async void Awake()
         {
@@ -45,9 +48,14 @@ namespace C4U
                 _rayCamera = Camera.main;
             }
 
+            await Task.Delay(100);
+
             // Wait a bit, because Unity's execution order messes with the validity.
-            await Utils.WaitForValidObject(ICore.Container, 100);
-            _gameState = ICore.Container.Get<IGameState>();
+            _gameState = await ICore.Container.Get<IGameState>();
+            _gameState.SetGameState(IGameState.GameState.Active);
+
+            _mainSceneUI = await SceneLoader.LoadCanvasSceneAsync<IMainSceneUI>("MainSceneUI");
+            _mainSceneUI.SetActivePlayer(_gameState.CurrentPlayerIndex);
         }
 
         private void OnEnable()
@@ -58,6 +66,8 @@ namespace C4U
             _grid.OnGridOccupied += OnGridOccupied;
 
             IInputEvent.EnableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
+
+            _mainSceneUI?.SetActivePlayer(_gameState.CurrentPlayerIndex);
         }
 
         private void OnDisable()
@@ -68,6 +78,8 @@ namespace C4U
             _grid.OnGridOccupied -= OnGridOccupied;
 
             IInputEvent.DisableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
+
+            _mainSceneUI?.SetActivePlayer(-1);
         }
 
         // Try to confirm the current player's choice when pressing the pointer's button.
@@ -123,6 +135,8 @@ namespace C4U
 
             // Begin the next player's turn.
             _gameState.SetCurrentPlayer(nexPlayerIndex);
+
+            _mainSceneUI.SetActivePlayer(_gameState.CurrentPlayerIndex);
         }
 
         // Update the current highlighted grid cell.
@@ -163,20 +177,44 @@ namespace C4U
             _gameState.SetGameState(IGameState.GameState.GameOver);
 
             await SceneLoader.UnloadSceneAsync("MainSceneUI");
-            await SceneLoader.LoadSceneAsync("EndSceneUI");
+            ShowEndScreen();
         }
 
+        // GAME OVER!
         private async void OnGridOccupied()
         {
             if (_gameState.GetGameState() != IGameState.GameState.Active)
                 return;
 
+            _gameState.SetCurrentPlayer(-1);
             _gameState.SetGameState(IGameState.GameState.GameOver);
 
             OnDisable();
 
             await SceneLoader.UnloadSceneAsync("MainSceneUI");
-            await SceneLoader.LoadSceneAsync("EndSceneUI");
+            ShowEndScreen();
+        }
+
+        private async void ShowEndScreen()
+        {
+            // Wait a bit to unregister pointer click.
+            await Task.Delay(500);
+
+            _endSceneUI = await SceneLoader.LoadCanvasSceneAsync<IEndSceneUI>("EndSceneUI");
+
+            int playerIndex = _gameState.GetCurrentPlayer<IPlayer>().PlayerIndex;
+            string winnerText = playerIndex >= 0
+                ? "Result: PLAYER " + playerIndex + " won!"
+                : "Result: Tie";
+
+            _endSceneUI.SetWinnerText(winnerText);
+            _endSceneUI.SetButtonAction(async () =>
+            {
+                _endSceneUI.SetButtonAction(null);
+                await SceneLoader.UnloadSceneAsync("Main");
+                await SceneLoader.UnloadSceneAsync("EndSceneUI");
+                await SceneLoader.LoadSceneAsync("MainMenu");
+            });
         }
     }
 }
