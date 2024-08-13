@@ -22,14 +22,13 @@ namespace C4U
         private Transform _currentHighlightedCell;
         private IConnect4GridCell _currentHighlightedCellData;
 
-        private GameState _gameState;
+        private IGameState _gameState;
 
-        private void Awake()
+        private async void Awake()
         {
             // Create a Connect 4 Grid and initialize it with the GridGenerator's cells.
             _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
             _controls = new();
-            _gameState = ICore.Container.Get<GameState>();
 
             var playerInput = _controls.Player;
             playerInput.Enable();
@@ -45,6 +44,10 @@ namespace C4U
             {
                 _rayCamera = Camera.main;
             }
+
+            // Wait a bit, because Unity's execution order messes with the validity.
+            await Utils.WaitForValidObject(ICore.Container, 100);
+            _gameState = ICore.Container.Get<IGameState>();
         }
 
         private void OnEnable()
@@ -152,7 +155,12 @@ namespace C4U
         // GAME OVER!
         private async void OnConnectionFound(IPlayer victor)
         {
+            if (_gameState.GetGameState() != IGameState.GameState.Active)
+                return;
+
             OnDisable();
+
+            _gameState.SetGameState(IGameState.GameState.GameOver);
 
             await SceneLoader.UnloadSceneAsync("MainSceneUI");
             await SceneLoader.LoadSceneAsync("EndSceneUI");
@@ -160,6 +168,11 @@ namespace C4U
 
         private async void OnGridOccupied()
         {
+            if (_gameState.GetGameState() != IGameState.GameState.Active)
+                return;
+
+            _gameState.SetGameState(IGameState.GameState.GameOver);
+
             OnDisable();
 
             await SceneLoader.UnloadSceneAsync("MainSceneUI");

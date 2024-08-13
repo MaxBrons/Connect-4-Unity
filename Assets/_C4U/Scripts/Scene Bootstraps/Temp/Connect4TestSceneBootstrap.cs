@@ -23,10 +23,9 @@ namespace C4U
 
         private IGameState _gameState;
 
-        private void Awake()
+        private async void Awake()
         {
             _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
-            _gameState = ICore.Container.Get<IGameState>();
 
             // Fallback for camera assignment.
             if (_rayCamera == null)
@@ -36,6 +35,9 @@ namespace C4U
 
             _controls = new();
             _controls.Player.Enable();
+
+            await Utils.WaitForValidObject(ICore.Container, 100);
+            _gameState = ICore.Container.Get<IGameState>();
 
             // TODO: Move this to the game manager.
             _gameState.AddPlayer(new Player(0));

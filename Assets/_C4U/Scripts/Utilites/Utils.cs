@@ -1,4 +1,7 @@
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace C4U.Utilities
@@ -24,6 +27,34 @@ namespace C4U.Utilities
                 return false;
 
             return true;
+        }
+
+        /// <summary>
+        /// Wait for an object to become valid or until the timeout is reached.
+        /// </summary>
+        /// <param name="obj">The object to check for validity</param>
+        /// <param name="msTimeout">The max time to wait.</param>
+        /// <returns></returns>
+        public static async Task<bool> WaitForValidObject(object obj, int msTimeout = 500)
+        {
+            CancellationTokenSource cancelationToken = new(msTimeout);
+            TaskCompletionSource<bool> result = new();
+
+            await Task.Run(async () =>
+            {
+                while (!cancelationToken.IsCancellationRequested)
+                {
+                    if (obj != null)
+                        return;
+
+                    await Task.Delay(Math.Min(100, msTimeout));
+                }
+            }, cancelationToken.Token);
+
+            if (obj != null)
+                return true;
+
+            return false;
         }
     }
 }

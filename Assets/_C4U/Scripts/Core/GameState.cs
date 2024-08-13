@@ -12,6 +12,9 @@ namespace C4U.Core
             None, Active, GameOver
         }
 
+        public int CurrentPlayerIndex { get; }
+        public int PlayerCount { get; }
+
         public void AddPlayer(IPlayer player);
         public void RemovePlayer(int index);
         public void SetCurrentPlayer(int index);
