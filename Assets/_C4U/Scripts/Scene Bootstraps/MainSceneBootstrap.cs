@@ -22,11 +22,14 @@ namespace C4U
         private Transform _currentHighlightedCell;
         private IConnect4GridCell _currentHighlightedCellData;
 
+        private GameState _gameState;
+
         private void Awake()
         {
             // Create a Connect 4 Grid and initialize it with the GridGenerator's cells.
             _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
             _controls = new();
+            _gameState = ICore.Container.Get<GameState>();
 
             var playerInput = _controls.Player;
             playerInput.Enable();
@@ -49,6 +52,7 @@ namespace C4U
             _grid.OnCellOccupied += OnGridCellOccupation;
             _grid.OnActiveColumnChanged += OnActiveColumnChanged;
             _grid.OnConnectionFound += OnConnectionFound;
+            _grid.OnGridOccupied += OnGridOccupied;
 
             IInputEvent.EnableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
         }
@@ -58,6 +62,7 @@ namespace C4U
             _grid.OnCellOccupied -= OnGridCellOccupation;
             _grid.OnActiveColumnChanged -= OnActiveColumnChanged;
             _grid.OnConnectionFound -= OnConnectionFound;
+            _grid.OnGridOccupied -= OnGridOccupied;
 
             IInputEvent.DisableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
         }
@@ -65,7 +70,7 @@ namespace C4U
         // Try to confirm the current player's choice when pressing the pointer's button.
         private void OnFire(InputAction.CallbackContext ctx)
         {
-            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
+            IPlayer player = _gameState.GetCurrentPlayer<IPlayer>();
 
             _grid.ConfirmChoice(player);
         }
@@ -91,7 +96,7 @@ namespace C4U
         // Try to confirm the player's choice when pressing the confirm button.
         private void OnConfirmChoice(InputAction.CallbackContext ctx)
         {
-            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
+            IPlayer player = _gameState.GetCurrentPlayer<IPlayer>();
 
             _grid.ConfirmChoice(player);
         }
@@ -111,10 +116,10 @@ namespace C4U
                     break;
             };
 
-            int nexPlayerIndex = (GameState.CurrentPlayerIndex + 1) % GameState.PlayerCount;
+            int nexPlayerIndex = (_gameState.CurrentPlayerIndex + 1) % _gameState.PlayerCount;
 
             // Begin the next player's turn.
-            GameState.SetCurrentPlayer(nexPlayerIndex);
+            _gameState.SetCurrentPlayer(nexPlayerIndex);
         }
 
         // Update the current highlighted grid cell.
@@ -146,6 +151,14 @@ namespace C4U
 
         // GAME OVER!
         private async void OnConnectionFound(IPlayer victor)
+        {
+            OnDisable();
+
+            await SceneLoader.UnloadSceneAsync("MainSceneUI");
+            await SceneLoader.LoadSceneAsync("EndSceneUI");
+        }
+
+        private async void OnGridOccupied()
         {
             OnDisable();
 

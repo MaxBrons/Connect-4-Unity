@@ -21,9 +21,12 @@ namespace C4U
         private Transform _currentHighlightedCell;
         private IConnect4GridCell _currentHighlightedCellData;
 
+        private GameState _gameState;
+
         private void Awake()
         {
             _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
+            _gameState = ICore.Container.Get<GameState>();
 
             // Fallback for camera assignment.
             if (_rayCamera == null)
@@ -35,7 +38,7 @@ namespace C4U
             _controls.Player.Enable();
 
             // TODO: Move this to the game manager.
-            GameState.AddPlayer(new Player(0));
+            _gameState.AddPlayer(new Player(0));
         }
 
         private void OnEnable()
@@ -65,7 +68,7 @@ namespace C4U
             if (!ctx.performed)
                 return;
 
-            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
+            IPlayer player = _gameState.GetCurrentPlayer<IPlayer>();
 
             _grid.ConfirmChoice(player);
         }
@@ -95,7 +98,7 @@ namespace C4U
             if (!ctx.performed)
                 return;
 
-            IPlayer player = GameState.GetCurrentPlayer<IPlayer>();
+            IPlayer player = _gameState.GetCurrentPlayer<IPlayer>();
 
             _grid.ConfirmChoice(player);
         }

@@ -10,6 +10,8 @@ namespace C4U.Core
     /// </summary>
     public interface ICore
     {
+        public static IDependencyContainer Container;
+
         protected static MonoBehaviour _coroutineHelper;
 
         /// <summary>
@@ -41,12 +43,18 @@ namespace C4U.Core
         // 2. Create scene loading container.
         // 3. Load game via services scene.
 
+        private GameState _gameState;
+
         private void Awake()
         {
-            ICore._coroutineHelper = this;
+            _gameState = new GameState();
 
-            GameState.AddPlayer(new Player(0));
-            GameState.AddPlayer(new Player(1));
+            ICore._coroutineHelper = this;
+            ICore.Container = new DependencyContainer();
+            ICore.Container.Add<GameState>(_gameState);
+
+            _gameState.AddPlayer(new Player(0));
+            _gameState.AddPlayer(new Player(1));
         }
     }
 }

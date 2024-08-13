@@ -9,27 +9,27 @@ namespace C4U.Core
     /// A Class that represents the state of the game. <br/>
     /// It keeps track of the players in the game and has logic to interface with the players.
     /// </summary>
-    public static class GameState
+    public class GameState
     {
-        public static int CurrentPlayerIndex => s_currentPlayerIndex;
-        public static int PlayerCount => s_players.Count;
+        public int CurrentPlayerIndex => _currentPlayerIndex;
+        public int PlayerCount => _players.Count;
 
-        private readonly static List<IPlayer> s_players = new();
-        private static int s_currentPlayerIndex = -1;
+        private readonly List<IPlayer> _players = new();
+        private int _currentPlayerIndex = -1;
 
         /// <summary>
         /// Add a player to the game.
         /// </summary>
         /// <param name="player"></param>
-        public static void AddPlayer(IPlayer player)
+        public void AddPlayer(IPlayer player)
         {
             if (player != null)
             {
-                s_players.Add(player);
+                _players.Add(player);
 
-                if (s_currentPlayerIndex < 0)
+                if (_currentPlayerIndex < 0)
                 {
-                    s_currentPlayerIndex = player.PlayerIndex;
+                    _currentPlayerIndex = player.PlayerIndex;
                 }
             }
         }
@@ -39,14 +39,14 @@ namespace C4U.Core
         /// Asserts if index is invalid.
         /// </summary>
         /// <param name="index"></param>
-        public static void RemovePlayer(int index)
+        public void RemovePlayer(int index)
         {
-            if (index >= 0 && index < s_players.Count)
+            if (index >= 0 && index < _players.Count)
             {
-                s_players.RemoveAt(index);
+                _players.RemoveAt(index);
             }
 
-            Debug.Assert(index >= 0 && index < s_players.Count,
+            Debug.Assert(index >= 0 && index < _players.Count,
                 "Error while trying to remove a Player: Invalid Player Index");
         }
 
@@ -55,13 +55,13 @@ namespace C4U.Core
         /// The given index will be wrapped using the modulo operator for ease.
         /// </summary>
         /// <param name="index">The index of the new active player.</param>
-        public static void SetCurrentPlayer(int index)
+        public void SetCurrentPlayer(int index)
         {
-            var player = s_players.FirstOrDefault(player => player.PlayerIndex == index);
+            var player = _players.FirstOrDefault(player => player.PlayerIndex == index);
 
             if (player != null)
             {
-                s_currentPlayerIndex = player.PlayerIndex;
+                _currentPlayerIndex = player.PlayerIndex;
             }
         }
 
@@ -70,9 +70,9 @@ namespace C4U.Core
         /// </summary>
         /// <typeparam name="T">Type of the class that implements <see cref="IPlayer"/>.</typeparam>
         /// <returns></returns>
-        public static T GetCurrentPlayer<T>() where T : class, IPlayer
+        public T GetCurrentPlayer<T>() where T : class, IPlayer
         {
-            return s_players[s_currentPlayerIndex] as T;
+            return _players[_currentPlayerIndex] as T;
         }
 
         /// <summary>
@@ -81,9 +81,9 @@ namespace C4U.Core
         /// <typeparam name="T">Type of the class that implements <see cref="IPlayer"/>.</typeparam>
         /// <param name="index">The resulting player's index.</param>
         /// <returns></returns>
-        public static T GetPlayerByIndex<T>(int index) where T : class, IPlayer
+        public T GetPlayerByIndex<T>(int index) where T : class, IPlayer
         {
-            return s_players.FirstOrDefault(player => player.PlayerIndex == index) as T;
+            return _players.FirstOrDefault(player => player.PlayerIndex == index) as T;
         }
     }
 }
