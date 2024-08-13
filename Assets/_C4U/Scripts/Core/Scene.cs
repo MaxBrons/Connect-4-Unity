@@ -2,6 +2,9 @@
 
 namespace C4U.Core
 {
+    /// <summary>
+    /// Used to store a scene's name and build index in the <see cref="IDependencyContainer"/>.
+    /// </summary>
     [System.Serializable]
     public class Scene
     {

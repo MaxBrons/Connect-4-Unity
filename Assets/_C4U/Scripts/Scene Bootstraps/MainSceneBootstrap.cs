@@ -9,20 +9,24 @@ using UnityEngine.InputSystem;
 
 namespace C4U
 {
+    // Bootstrap for the main game. Handles most of the game.
     public class MainSceneBootstrap : MonoBehaviour
     {
         [SerializeField] private GridGenerator _gridGenerator;
         [SerializeField] private Camera _rayCamera;
 
+        // Input values.
         private BaseControls _controls;
         private IInputEvent _fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent;
 
         private Vector3 _currentScreenPos;
 
+        // Grid value.
         private Connect4Grid<Connect4GridCell> _grid;
         private Transform _currentHighlightedCell;
         private IConnect4GridCell _currentHighlightedCellData;
 
+        // Core values / UI.
         private IGameState _gameState;
         private IMainSceneUI _mainSceneUI;
         private IEndSceneUI _endSceneUI;
@@ -167,6 +171,7 @@ namespace C4U
         }
 
         // GAME OVER!
+        // Open the end screen and disable main game input.
         private async void OnConnectionFound(IPlayer victor)
         {
             if (_gameState.GetGameState() != IGameState.GameState.Active)
@@ -181,11 +186,13 @@ namespace C4U
         }
 
         // GAME OVER!
+        // Open the end screen and disable main game input.
         private async void OnGridOccupied()
         {
             if (_gameState.GetGameState() != IGameState.GameState.Active)
                 return;
 
+            // Nobody won, so set the index to -1 to show the 'tie' text.
             _gameState.SetCurrentPlayer(-1);
             _gameState.SetGameState(IGameState.GameState.GameOver);
 
@@ -195,6 +202,8 @@ namespace C4U
             ShowEndScreen();
         }
 
+        // Show the end screen with the corresponding title text.
+        // Load the main menu when the continue button is pressed.
         private async void ShowEndScreen()
         {
             // Wait a bit to unregister pointer click.
@@ -202,13 +211,15 @@ namespace C4U
 
             _endSceneUI = await SceneLoader.LoadCanvasSceneAsync<IEndSceneUI>("EndSceneUI");
 
+            // Set title text.
             int playerIndex = _gameState.GetCurrentPlayer<IPlayer>().PlayerIndex;
             string winnerText = playerIndex >= 0
                 ? "Result: PLAYER " + playerIndex + " won!"
                 : "Result: Tie";
 
-
             _endSceneUI.SetWinnerText(winnerText);
+
+            // Go to main menu on continue button pressed.
             _endSceneUI.SetButtonAction(async () =>
             {
                 _endSceneUI.SetButtonAction(null);

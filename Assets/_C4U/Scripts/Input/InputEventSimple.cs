@@ -30,6 +30,9 @@ namespace C4U.Input
             Disable();
         }
 
+        /// <summary>
+        /// Bind to the performed action of the stored <see cref="InputAction"/>.
+        /// </summary>
         public void Enable()
         {
             // Unbind the action first to stop double bindings from occuring.
@@ -38,6 +41,9 @@ namespace C4U.Input
             _action.performed += _onAction;
         }
 
+        /// <summary>
+        /// Unbind from the performed action of the stored <see cref="InputAction"/>.
+        /// </summary>
         public void Disable()
         {
             _action.performed -= _onAction;

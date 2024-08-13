@@ -220,7 +220,7 @@ namespace C4U.Game
             return false;
         }
 
-
+        // Check if all grid cells are occupied and if so, invoke the corresponding event.
         private void CheckForFullGrid()
         {
             foreach (var cell in _grid.Values)

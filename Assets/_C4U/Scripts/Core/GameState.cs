@@ -5,8 +5,12 @@ using System.Linq;
 
 namespace C4U.Core
 {
+    /// <summary>
+    /// An interface for handling general Game State functionality.
+    /// </summary>
     public interface IGameState
     {
+        // Used for the active state of the game.
         public enum GameState
         {
             None, Active, GameOver
@@ -42,7 +46,7 @@ namespace C4U.Core
         /// <summary>
         /// Add a player to the game.
         /// </summary>
-        /// <param name="player"></param>
+        /// <param name="player">The player to add.</param>
         public void AddPlayer(IPlayer player)
         {
             if (player != null)
@@ -60,7 +64,7 @@ namespace C4U.Core
         /// Removes a player from the game. <br/>
         /// Asserts if index is invalid.
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">The player to remove with the given player index.</param>
         public void RemovePlayer(int index)
         {
             if (index >= 0 && index < _players.Count)

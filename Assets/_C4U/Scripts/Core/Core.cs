@@ -47,15 +47,16 @@ namespace C4U.Core
         {
             _gameState = new GameState();
 
+            // Register all game dependencies.
             ICore._coroutineHelper = this;
             ICore.Container = new DependencyContainer();
-
             await ICore.Container.Add<IGameState>(_gameState);
             await ICore.Container.Add<ISceneContainer>(_sceneContainer.CreateInstance());
 
             _gameState.AddPlayer(new Player(0));
             _gameState.AddPlayer(new Player(1));
 
+            // Load in the main menu scene.
             await SceneLoader.LoadSceneAsync("MainMenu");
         }
     }

@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace C4U.Utilities
 {
+    /// <summary>
+    /// Utility calss to generate the grid cells in the scene.
+    /// </summary>
     public class GridGenerator : MonoBehaviour
     {
         public int Width => _columnCount;
@@ -19,11 +22,15 @@ namespace C4U.Utilities
 
         private void Awake()
         {
+            // Store all the generated cells.
             _gridCells = transform.GetComponentsInChildren<Transform>()
                 .Where(cell => cell != transform)
                 .ToList();
         }
 
+        /// <summary>
+        /// Remove all previously generated cells and place new ones.
+        /// </summary>
         [ContextMenu("Regenerate Grid")]
         private void GenerateGrid()
         {
@@ -39,12 +46,13 @@ namespace C4U.Utilities
             {
                 for (int x = 0; x < _columnCount; x++)
                 {
+                    // Offset their positions based on the set margins.
                     float xPos = x * _cellMargin.x + x * _gridCellPrefab.transform.localScale.x;
                     float yPos = y * _cellMargin.y + y * _gridCellPrefab.transform.localScale.y;
 
+                    // Instantiate the set prefab of the grid cell and add it to the grid cell list.
                     var gridCell = Instantiate(_gridCellPrefab, transform);
                     gridCell.transform.localPosition = new Vector3(xPos, yPos);
-
 
                     _gridCells.Add(gridCell.transform);
                 }

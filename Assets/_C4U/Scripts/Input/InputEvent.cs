@@ -13,6 +13,10 @@ namespace C4U.Input
         public void Enable();
         public void Disable();
 
+        /// <summary>
+        /// Enable mutiple <see cref="IInputEvent"/>s at the same time.
+        /// </summary>
+        /// <param name="events">The event(s) to enable.</param>
         public static void EnableMultiple(params IInputEvent[] events)
         {
             foreach (var @event in events)
@@ -21,6 +25,10 @@ namespace C4U.Input
             }
         }
 
+        /// <summary>
+        /// Disable mutiple <see cref="IInputEvent"/>s at the same time.
+        /// </summary>
+        /// <param name="events">The event(s) to disable.</param>
         public static void DisableMultiple(params IInputEvent[] events)
         {
             foreach (var @event in events)
@@ -55,6 +63,9 @@ namespace C4U.Input
             Disable();
         }
 
+        /// <summary>
+        /// Bind to the started, performed and canceled actions of the stored <see cref="InputAction"/>.
+        /// </summary>
         public void Enable()
         {
             // Unbind the action first to stop double bindings from occuring.
@@ -65,6 +76,9 @@ namespace C4U.Input
             _action.canceled += _onAction;
         }
 
+        /// <summary>
+        /// Unbind from the started, performed and canceled actions of the stored <see cref="InputAction"/>.
+        /// </summary>
         public void Disable()
         {
             _action.started -= _onAction;
