@@ -43,7 +43,7 @@ namespace C4U.Core
         // 2. Create scene loading container.
         // 3. Load game via services scene.
 
-        private GameState _gameState;
+        private IGameState _gameState;
 
         private void Awake()
         {
@@ -51,7 +51,7 @@ namespace C4U.Core
 
             ICore._coroutineHelper = this;
             ICore.Container = new DependencyContainer();
-            ICore.Container.Add<GameState>(_gameState);
+            ICore.Container.Add<IGameState>(_gameState);
 
             _gameState.AddPlayer(new Player(0));
             _gameState.AddPlayer(new Player(1));

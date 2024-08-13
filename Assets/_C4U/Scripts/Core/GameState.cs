@@ -5,17 +5,36 @@ using System.Linq;
 
 namespace C4U.Core
 {
+    public interface IGameState
+    {
+        public enum GameState
+        {
+            None, Active, GameOver
+        }
+
+        public void AddPlayer(IPlayer player);
+        public void RemovePlayer(int index);
+        public void SetCurrentPlayer(int index);
+        public T GetCurrentPlayer<T>() where T : class, IPlayer;
+        public T GetPlayerByIndex<T>(int index) where T : class, IPlayer;
+
+        public void SetGameState(GameState state);
+        public GameState GetGameState();
+    }
+
     /// <summary>
     /// A Class that represents the state of the game. <br/>
     /// It keeps track of the players in the game and has logic to interface with the players.
     /// </summary>
-    public class GameState
+    public class GameState : IGameState
     {
         public int CurrentPlayerIndex => _currentPlayerIndex;
         public int PlayerCount => _players.Count;
 
         private readonly List<IPlayer> _players = new();
         private int _currentPlayerIndex = -1;
+
+        private IGameState.GameState _state;
 
         /// <summary>
         /// Add a player to the game.
@@ -84,6 +103,24 @@ namespace C4U.Core
         public T GetPlayerByIndex<T>(int index) where T : class, IPlayer
         {
             return _players.FirstOrDefault(player => player.PlayerIndex == index) as T;
+        }
+
+        /// <summary>
+        /// Set the current game state to the given value.
+        /// </summary>
+        /// <param name="state">The new state of the game.</param>
+        public void SetGameState(IGameState.GameState state)
+        {
+            _state = state;
+        }
+
+        /// <summary>
+        /// Return the current state of the game.
+        /// </summary>
+        /// <returns></returns>
+        public IGameState.GameState GetGameState()
+        {
+            return _state;
         }
     }
 }

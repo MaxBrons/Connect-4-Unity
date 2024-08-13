@@ -21,12 +21,12 @@ namespace C4U
         private Transform _currentHighlightedCell;
         private IConnect4GridCell _currentHighlightedCellData;
 
-        private GameState _gameState;
+        private IGameState _gameState;
 
         private void Awake()
         {
             _grid = new(_gridGenerator.Width, _gridGenerator.Height, _gridGenerator.GridCells);
-            _gameState = ICore.Container.Get<GameState>();
+            _gameState = ICore.Container.Get<IGameState>();
 
             // Fallback for camera assignment.
             if (_rayCamera == null)
