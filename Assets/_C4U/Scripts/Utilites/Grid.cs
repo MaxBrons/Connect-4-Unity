@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace C4U.Utilities
 {
@@ -59,26 +60,24 @@ namespace C4U.Utilities
         }
 
         /// <summary>
-        /// Return a grid cell's value at a given position. <br/>
-        /// NOTE: This method does not check for out of bound coordinates.
+        /// Return a grid cell's value at a given position or null. <br/>
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
         public T Get(int x, int y)
         {
-            return _grid[x + y * Width];
+            return _grid.ElementAtOrDefault(x + y * Width);
         }
 
         /// <summary>
-        /// Return a grid cell's value at a given index.
-        /// NOTE: This method does not check for out of bound index.
+        /// Return a grid cell's value at a given index or null.
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
         public T Get(int index)
         {
-            return _grid[index];
+            return _grid.ElementAtOrDefault(index);
         }
 
         // Check if the x/y coordinates are in within the grid's range.

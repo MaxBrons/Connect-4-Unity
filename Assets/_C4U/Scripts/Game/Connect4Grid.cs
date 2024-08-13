@@ -15,6 +15,9 @@ namespace C4U.Game
         public event CellEvent OnCellOccupied;
         public event CellEvent OnActiveColumnChanged;
 
+        public delegate void ConnectionEvent(IPlayer victor);
+        public event ConnectionEvent OnConnectionFound;
+
         private readonly List<Transform> _cells = new(); // Grid cells in the scene. 
         private readonly Grid<IConnect4GridCell> _grid;
         private readonly int _width, _height;
@@ -23,7 +26,7 @@ namespace C4U.Game
         public Connect4Grid(int width, int height, List<Transform> cells)
         {
             _cells = cells;
-            _grid = new(width, height, () => new T());
+            _grid = new(width, height, index => new T());
             _width = width;
             _height = height;
         }
@@ -106,6 +109,8 @@ namespace C4U.Game
             {
                 int cellIndex = _grid.Values.IndexOf(gridCell);
                 OnCellOccupied?.Invoke(_cells[cellIndex], gridCell);
+
+                CheckForConnections(cellIndex, source);
             }
         }
 
@@ -151,6 +156,64 @@ namespace C4U.Game
 
             // If there's no active column, dispatch null to clear the grid.
             OnActiveColumnChanged?.Invoke(null, null);
+        }
+
+        // Go through the surrounding 8 cells and check if they have the same occupant. <br/>
+        // If the occupant is the same and the maxDepth has been reached, we have a valid Connect 4 match.
+        private void CheckForConnections(int startIndex, IPlayer source)
+        {
+            // Loop from top left to bottom right, but skip the middle.
+            for (int y = -1; y <= 1; y++)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    if (x == 0 && y == 0)
+                        continue;
+
+                    // Get the XY coordinates and check if the XY + offset is within the bounds.
+                    int xPos = startIndex % _width;
+                    int yPos = startIndex / _width;
+
+                    if (xPos + x < 0 || xPos + x >= _width)
+                        continue;
+
+                    if (yPos + y < 0 || yPos + y >= _height)
+                        continue;
+
+                    // Start searching from the placed down piece.
+                    var success = CheckConnectionDirection(xPos, yPos, x, y, 0, 3, source);
+
+                    // Invoke the event when a valid Connect 4 match has been found.
+                    if (success)
+                    {
+                        OnConnectionFound?.Invoke(source);
+                    }
+                }
+            }
+        }
+
+        // Compare a given cell's occupant to the source.
+        // Then go to the next cell in the same direction.
+        // Repeat this untill the maxDepth has been reached to see if there is a Connect 4 match.
+        private bool CheckConnectionDirection(int x, int y, int xOffset, int yOffset, int depth, int maxDepth, IPlayer source)
+        {
+            // Return if 4 pieces with the same occupant allign next to each other.
+            if (depth >= maxDepth)
+                return true;
+
+            // Get the neighbouring cell in the same given direction, based on the offsets.
+            var cell = _grid.Get(x + xOffset, y + yOffset);
+
+            if (cell == null)
+                return false;
+
+            // Repeat this search untill the maxDepth has been reached or if the next cell is invalid.
+            if (cell.Occupant == source)
+            {
+                return CheckConnectionDirection(x + xOffset, y + yOffset, xOffset, yOffset, depth + 1, maxDepth, source);
+            }
+
+            return false;
         }
     }
 }

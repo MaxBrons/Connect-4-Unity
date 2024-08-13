@@ -9,7 +9,7 @@ namespace C4U
 
         void Start()
         {
-            _grid = new(10, 5, () => 0);
+            _grid = new(10, 5, index => 0);
             _grid.Set(0, 0, 1);
             _grid.Set(1, 1, 1);
             _grid.Set(2, 2, 1);

@@ -1,4 +1,5 @@
 using C4U.Core;
+using C4U.Core.SceneManagement;
 using C4U.Game;
 using C4U.Input;
 using C4U.Utilities;
@@ -47,6 +48,7 @@ namespace C4U
         {
             _grid.OnCellOccupied += OnGridCellOccupation;
             _grid.OnActiveColumnChanged += OnActiveColumnChanged;
+            _grid.OnConnectionFound += OnConnectionFound;
 
             IInputEvent.EnableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
         }
@@ -55,6 +57,7 @@ namespace C4U
         {
             _grid.OnCellOccupied -= OnGridCellOccupation;
             _grid.OnActiveColumnChanged -= OnActiveColumnChanged;
+            _grid.OnConnectionFound -= OnConnectionFound;
 
             IInputEvent.DisableMultiple(_fireEvent, _pointerPositionChangedEvent, _moveInDirectionEvent, _confirmEvent);
         }
@@ -139,6 +142,15 @@ namespace C4U
             // Clear all stored values when no column is active.
             _currentHighlightedCell = null;
             _currentHighlightedCellData = null;
+        }
+
+        // GAME OVER!
+        private async void OnConnectionFound(IPlayer victor)
+        {
+            OnDisable();
+
+            await SceneLoader.UnloadSceneAsync("MainSceneUI");
+            await SceneLoader.LoadSceneAsync("EndSceneUI");
         }
     }
 }
