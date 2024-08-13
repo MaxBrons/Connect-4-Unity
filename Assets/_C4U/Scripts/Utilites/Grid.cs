@@ -24,7 +24,7 @@ namespace C4U.Utilities
         /// <param name="width">The width of the grid.</param>
         /// <param name="height">The height of the grid.</param>
         /// <param name="initializer">The Func for initializing each grid cell.</param>
-        public Grid(int width, int height, Func<T> initializer = null)
+        public Grid(int width, int height, Func<int, T> initializer = null)
         {
             _grid = new(width * height);
 
@@ -37,7 +37,7 @@ namespace C4U.Utilities
             {
                 if (initializer != null)
                 {
-                    _grid.Add(initializer());
+                    _grid.Add(initializer(i));
                     continue;
                 }
 
